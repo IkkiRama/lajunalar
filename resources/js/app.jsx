@@ -7,6 +7,7 @@ import { Protected } from './components/Layout';
 import { AdminOnly } from './components/AdminLayout';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage, PackagesPage, QuizDetailPage } from './pages/DashboardPages';
+import { HistoryPage } from './pages/HistoryPage';
 import { AttemptPage, ResultPage } from './pages/AttemptPages';
 import { AdminPackagesPage } from './pages/AdminPages';
 import { GenerationProgressPage, GenerationSuccessPage } from './pages/GenerationPages';
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<LandingPage/>}/>
         <Route path="/dashboard" element={<Protected><DashboardPage/></Protected>}/>
         <Route path="/paket" element={<Protected><PackagesPage/></Protected>}/>
+        <Route path="/riwayat" element={<Protected><HistoryPage/></Protected>}/>
         <Route path="/paket/:uuid" element={<Protected><QuizDetailPage/></Protected>}/>
         <Route path="/attempt/:uuid" element={<Protected><AttemptPage/></Protected>}/>
         <Route path="/attempt/:uuid/hasil" element={<Protected><ResultPage/></Protected>}/>

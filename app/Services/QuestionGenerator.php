@@ -81,7 +81,7 @@ class QuestionGenerator
     {
         $alphabet = range('A', 'Z');
         shuffle($alphabet);
-        $letters = array_slice($alphabet, 0, 10);
+        $letters = array_slice($alphabet, 0, 9);
         $answer = $letters[random_int(0, count($letters) - 1)];
         $letters[] = $answer;
         shuffle($letters);

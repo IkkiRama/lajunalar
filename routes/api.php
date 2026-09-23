@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AdminGenerationController;
 use App\Http\Controllers\Api\V1\AdminQuizController;
+use App\Http\Controllers\Api\V1\AttemptHistoryController;
 use App\Http\Controllers\Api\V1\AttemptAnswerBatchController;
 use App\Http\Controllers\Api\V1\AttemptResultController;
 use App\Http\Controllers\Api\V1\DashboardController;
@@ -20,6 +21,7 @@ Route::bind('quizQuestion', fn (string $value) => QuizQuestion::query()
 Route::prefix('v1')->middleware('auth:sanctum')->group(function (): void {
     Route::get('/me', fn (Request $request) => $request->user())->name('api.v1.me');
     Route::get('/dashboard', DashboardController::class)->name('api.v1.dashboard');
+    Route::get('/history', AttemptHistoryController::class)->name('api.v1.history');
     Route::get('/quizzes', [QuizController::class, 'index'])->name('api.v1.quizzes.index');
     Route::get('/quizzes/{quiz}', [QuizController::class, 'show'])->name('api.v1.quizzes.show');
     Route::post('/quizzes/{quiz}/attempts', [QuizAttemptController::class, 'store'])

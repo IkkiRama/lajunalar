@@ -5,9 +5,9 @@ import { useMeQuery } from '../store/api';
 
 export function LandingPage() {
     const { data: user } = useMeQuery();
-    return <div className="min-h-screen overflow-hidden bg-white dark:bg-slate-950">
+    return <div className="flex min-h-screen flex-col overflow-hidden bg-white dark:bg-slate-950">
         <Header minimal/>
-        <main>
+        <main className="flex-1">
             <section className="relative isolate overflow-hidden">
                 <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_20%,rgba(99,102,241,.14),transparent_28%),radial-gradient(circle_at_85%_35%,rgba(14,165,233,.12),transparent_26%)]"/>
                 <div className="mx-auto grid max-w-7xl items-center gap-14 px-5 py-20 lg:grid-cols-[1.06fr_.94fr] lg:px-8 lg:py-28">

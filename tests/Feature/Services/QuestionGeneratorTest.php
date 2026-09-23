@@ -30,7 +30,7 @@ class QuestionGeneratorTest extends TestCase
         foreach ($questions as $question) {
             $letters = explode(' ', $question['question_text']);
             $counts = array_count_values($letters);
-            $this->assertCount(11, $letters);
+            $this->assertCount(10, $letters);
             $this->assertSame(2, $counts[$question['correct_answer']]);
             $this->assertCount(1, array_filter($counts, fn (int $count): bool => $count === 2));
         }

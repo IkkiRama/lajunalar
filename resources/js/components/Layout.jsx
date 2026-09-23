@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { BrainCircuit, LayoutDashboard, LibraryBig, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react';
+import { BrainCircuit, History, LayoutDashboard, LibraryBig, LogOut, Menu, Moon, ShieldCheck, Sun, X } from 'lucide-react';
 import { useMeQuery } from '../store/api';
 import { LogoutConfirmModal } from './LogoutConfirmModal';
 
@@ -15,6 +15,7 @@ export function Header({ minimal = false }) {
     const { data: user } = useMeQuery();
     const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
     const [logoutOpen, setLogoutOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     useEffect(() => {
         document.documentElement.classList.toggle('dark', dark);
         localStorage.setItem('theme', dark ? 'dark' : 'light');
@@ -27,13 +28,28 @@ export function Header({ minimal = false }) {
                 {!minimal && user && <nav className="mr-2 hidden items-center gap-1 md:flex">
                     <NavLink to="/dashboard" className={({isActive}) => `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300'}`}><LayoutDashboard size={17}/>Dashboard</NavLink>
                     <NavLink to="/paket" className={({isActive}) => `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300'}`}><LibraryBig size={17}/>Paket</NavLink>
+                    <NavLink to="/riwayat" className={({isActive}) => `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300'}`}><History size={17}/>Riwayat</NavLink>
                     {user.role === 'admin' && <NavLink to="/kelola" className={({isActive}) => `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300'}`}><ShieldCheck size={17}/>Admin</NavLink>}
                 </nav>}
                 <button onClick={() => setDark(!dark)} aria-label="Ganti tema" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-200">{dark ? <Sun size={19}/> : <Moon size={19}/>}</button>
-                {!minimal && user && <button onClick={() => setLogoutOpen(true)} aria-label="Keluar" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-rose-600 dark:border-slate-700"><LogOut size={18}/></button>}
+                {!minimal && user && <button onClick={() => setLogoutOpen(true)} aria-label="Keluar" className="hidden size-10 place-items-center rounded-xl border border-slate-200 text-rose-600 md:grid dark:border-slate-700"><LogOut size={18}/></button>}
+                {!minimal && user && <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={mobileMenuOpen ? 'Tutup navigasi' : 'Buka navigasi'} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-600 md:hidden dark:border-slate-700 dark:text-slate-200">{mobileMenuOpen ? <X size={20}/> : <Menu size={20}/>}</button>}
             </div>
         </div>
+        {!minimal && user && mobileMenuOpen && <div id="mobile-navigation" className="border-t border-slate-200 bg-white md:hidden dark:border-slate-800 dark:bg-slate-950">
+            <nav className="mx-auto grid max-w-7xl gap-1 px-5 py-3" aria-label="Navigasi mobile">
+                <MobileNavLink to="/dashboard" icon={LayoutDashboard} onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileNavLink>
+                <MobileNavLink to="/paket" icon={LibraryBig} onClick={() => setMobileMenuOpen(false)}>Paket</MobileNavLink>
+                <MobileNavLink to="/riwayat" icon={History} onClick={() => setMobileMenuOpen(false)}>Riwayat</MobileNavLink>
+                {user.role === 'admin' && <MobileNavLink to="/kelola" icon={ShieldCheck} onClick={() => setMobileMenuOpen(false)}>Admin</MobileNavLink>}
+                <button type="button" onClick={() => { setMobileMenuOpen(false); setLogoutOpen(true); }} className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-950/30"><LogOut size={18}/>Keluar</button>
+            </nav>
+        </div>}
     </header><LogoutConfirmModal open={logoutOpen} onClose={() => setLogoutOpen(false)}/></>;
+}
+
+function MobileNavLink({ to, icon: Icon, children, onClick }) {
+    return <NavLink to={to} onClick={onClick} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition ${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'}`}><Icon size={18}/>{children}</NavLink>;
 }
 
 export function Footer() {
@@ -61,7 +77,7 @@ export function Protected({ children }) {
 }
 
 export function AppShell({ children, footer = true }) {
-    return <div className="min-h-screen"><Header/><main>{children}</main>{footer && <Footer/>}</div>;
+    return <div className="flex min-h-screen flex-col"><Header/><main className="flex-1">{children}</main>{footer && <Footer/>}</div>;
 }
 
 export const formatDate = (value) => value ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '-';

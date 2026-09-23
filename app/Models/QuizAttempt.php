@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['quiz_id', 'user_id', 'status', 'question_order', 'next_position', 'score', 'answered_count', 'correct_count', 'wrong_count', 'unanswered_count', 'accuracy', 'average_response_ms', 'started_at', 'expires_at', 'finished_at', 'last_synced_at'])]
+#[Fillable(['quiz_id', 'user_id', 'status', 'question_order', 'next_position', 'score', 'answered_count', 'correct_count', 'wrong_count', 'unanswered_count', 'accuracy', 'average_response_ms', 'number_answered_count', 'number_correct_count', 'number_average_response_ms', 'letter_answered_count', 'letter_correct_count', 'letter_average_response_ms', 'started_at', 'expires_at', 'finished_at', 'last_synced_at'])]
 class QuizAttempt extends Model
 {
     /** @use HasFactory<QuizAttemptFactory> */

@@ -30,18 +30,22 @@ class EditQuiz extends EditRecord
                 ->color('warning')
                 ->schema([
                     TextInput::make('count')
-                        ->label('Jumlah soal')
+                        ->label('Ukuran bank soal')
                         ->integer()
-                        ->minValue(1)
-                        ->maxValue(2000)
-                        ->default(fn (Quiz $record): int => $record->question_count)
+                        ->minValue(fn (Quiz $record): int => $record->question_count)
+                        ->maxValue(5000)
+                        ->default(fn (Quiz $record): int => $record->bank_size)
                         ->required(),
                     TextInput::make('number_count')
                         ->label('Jumlah soal angka')
                         ->helperText('Pada paket huruf nilainya diabaikan. Pada paket campuran, sisanya menjadi soal huruf.')
                         ->integer()
                         ->minValue(0)
-                        ->default(fn (Quiz $record): int => $record->type === QuizType::Letter ? 0 : intdiv($record->question_count, 2)),
+                        ->default(fn (Quiz $record): int => match ($record->type) {
+                            QuizType::Number => $record->bank_size,
+                            QuizType::Letter => 0,
+                            QuizType::Mixed => (int) round($record->bank_size * $record->number_percentage / 100),
+                        }),
                 ])
                 ->requiresConfirmation()
                 ->modalDescription('Bank soal draft saat ini akan diganti. Riwayat attempt tetap aman karena jawaban menyimpan snapshot soal.')

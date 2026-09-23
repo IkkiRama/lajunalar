@@ -26,6 +26,7 @@ class AdminQuizController extends Controller
                 'total' => $quizzes->count(),
                 'published' => $quizzes->where('status', QuizStatus::Published)->count(),
                 'questions' => $quizzes->sum('questions_count'),
+                'bank_capacity' => $quizzes->sum('bank_size'),
             ],
         ]);
     }
@@ -73,6 +74,8 @@ class AdminQuizController extends Controller
             'type' => $request->string('type')->toString(),
             'status' => $status,
             'question_count' => $request->integer('question_count'),
+            'bank_size' => $request->integer('bank_size'),
+            'number_percentage' => $request->integer('number_percentage'),
             'duration_seconds' => (int) round($request->float('duration_minutes') * 60),
             'passing_score' => $request->input('passing_score'),
             'starts_at' => $request->date('starts_at'),
@@ -113,6 +116,8 @@ class AdminQuizController extends Controller
             'status' => $quiz->status->value,
             'status_label' => $quiz->status->label(),
             'question_count' => $quiz->question_count,
+            'bank_size' => $quiz->bank_size,
+            'number_percentage' => $quiz->number_percentage,
             'available_questions' => (int) ($quiz->questions_count ?? $quiz->questions()->count()),
             'duration_seconds' => $quiz->duration_seconds,
             'duration_minutes' => $quiz->duration_seconds / 60,

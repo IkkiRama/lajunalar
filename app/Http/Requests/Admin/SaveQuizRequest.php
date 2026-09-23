@@ -23,6 +23,8 @@ class SaveQuizRequest extends FormRequest
             'type' => ['required', Rule::enum(QuizType::class)],
             'status' => ['required', Rule::enum(QuizStatus::class)],
             'question_count' => ['required', 'integer', 'min:1', 'max:2000'],
+            'bank_size' => ['required', 'integer', 'min:1', 'max:5000', 'gte:question_count'],
+            'number_percentage' => ['required', 'integer', 'min:0', 'max:100'],
             'duration_minutes' => ['required', 'numeric', 'min:1', 'max:180'],
             'passing_score' => ['nullable', 'integer', 'min:0', 'max:100'],
             'starts_at' => ['nullable', 'date'],

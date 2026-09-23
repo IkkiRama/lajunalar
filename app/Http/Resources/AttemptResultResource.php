@@ -24,6 +24,20 @@ class AttemptResultResource extends JsonResource
             'unanswered_count' => $this->unanswered_count,
             'accuracy' => (float) $this->accuracy,
             'average_response_ms' => $this->average_response_ms,
+            'personal_best_score' => $this->personal_best_score,
+            'is_personal_best' => (bool) $this->is_personal_best,
+            'performance_by_type' => [
+                'number' => $this->typePerformance(
+                    $this->number_answered_count,
+                    $this->number_correct_count,
+                    $this->number_average_response_ms,
+                ),
+                'letter' => $this->typePerformance(
+                    $this->letter_answered_count,
+                    $this->letter_correct_count,
+                    $this->letter_average_response_ms,
+                ),
+            ],
             'started_at' => $this->started_at->toIso8601String(),
             'finished_at' => $this->finished_at?->toIso8601String(),
             'quiz' => [
@@ -35,6 +49,18 @@ class AttemptResultResource extends JsonResource
                 'passed' => $this->quiz->passing_score === null ? null : $this->score >= $this->quiz->passing_score,
             ],
             'answers' => $this->whenLoaded('reviewItems'),
+        ];
+    }
+
+    /** @return array<string, int|float> */
+    private function typePerformance(int $answered, int $correct, int $averageResponseMs): array
+    {
+        return [
+            'answered' => $answered,
+            'correct' => $correct,
+            'wrong' => $answered - $correct,
+            'accuracy' => $answered > 0 ? round($correct / $answered * 100, 2) : 0,
+            'average_response_ms' => $averageResponseMs,
         ];
     }
 }

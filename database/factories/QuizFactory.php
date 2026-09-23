@@ -22,6 +22,8 @@ class QuizFactory extends Factory
             'type' => QuizType::Mixed,
             'status' => QuizStatus::Published,
             'question_count' => 10,
+            'bank_size' => 30,
+            'number_percentage' => 50,
             'duration_seconds' => 300,
             'published_at' => now(),
         ];

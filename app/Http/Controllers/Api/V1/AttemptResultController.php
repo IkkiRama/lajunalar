@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AttemptResultResource;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
+use App\Models\UserQuizStat;
 
 class AttemptResultController extends Controller
 {
@@ -46,6 +47,12 @@ class AttemptResultController extends Controller
             ];
         });
         $attempt->setRelation('reviewItems', $reviewItems);
+        $personalBest = (int) UserQuizStat::query()
+            ->where('user_id', $attempt->user_id)
+            ->where('quiz_id', $attempt->quiz_id)
+            ->value('best_score');
+        $attempt->setAttribute('personal_best_score', $personalBest);
+        $attempt->setAttribute('is_personal_best', $attempt->score >= $personalBest);
 
         return new AttemptResultResource($attempt);
     }

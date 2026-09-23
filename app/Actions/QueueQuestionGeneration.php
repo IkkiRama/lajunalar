@@ -13,8 +13,8 @@ class QueueQuestionGeneration
 {
     public function handle(Quiz $quiz, int $count, ?int $numberCount, int $userId): QuestionGenerationRun
     {
-        if ($count < 1 || $count > 2000) {
-            throw ValidationException::withMessages(['count' => 'Jumlah soal harus berada di antara 1 dan 2.000.']);
+        if ($count < $quiz->question_count || $count > 5000) {
+            throw ValidationException::withMessages(['count' => "Ukuran bank harus minimal {$quiz->question_count} dan maksimal 5.000 soal."]);
         }
 
         $hasActiveRun = $quiz->generationRuns()
@@ -44,6 +44,7 @@ class QueueQuestionGeneration
             'configuration' => [
                 'replace_existing' => true,
                 'quiz_type' => $quiz->type->value,
+                'number_percentage' => $quiz->number_percentage,
             ],
         ]);
 

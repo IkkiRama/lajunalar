@@ -27,7 +27,7 @@ class AdminGenerationController extends Controller
     public function store(Request $request, Quiz $quiz, QueueQuestionGeneration $queue): JsonResponse
     {
         $validated = $request->validate([
-            'count' => ['required', 'integer', 'min:1', 'max:2000'],
+            'count' => ['required', 'integer', 'min:'.$quiz->question_count, 'max:5000'],
             'number_count' => ['nullable', 'integer', 'min:0', 'lte:count'],
         ]);
 

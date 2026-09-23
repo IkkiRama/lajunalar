@@ -14,6 +14,8 @@ export function QuizModal({ quiz, onClose }) {
         type: quiz?.type ?? 'mixed',
         status: quiz?.status ?? 'published',
         question_count: quiz?.question_count ?? 500,
+        bank_size: quiz?.bank_size ?? 1500,
+        number_percentage: quiz?.number_percentage ?? 50,
         duration_minutes: quiz?.duration_minutes ?? 5,
         passing_score: quiz?.passing_score ?? '',
     }), [quiz]);
@@ -32,6 +34,8 @@ export function QuizModal({ quiz, onClose }) {
         const payload = {
             ...form,
             question_count: Number(form.question_count),
+            bank_size: Number(form.bank_size),
+            number_percentage: Number(form.number_percentage),
             duration_minutes: Number(form.duration_minutes),
             passing_score: form.passing_score === '' ? null : Number(form.passing_score),
             starts_at: quiz?.starts_at ?? null,
@@ -48,14 +52,16 @@ export function QuizModal({ quiz, onClose }) {
             <Field label="Nama paket"><input autoFocus required name="title" value={form.title} onChange={change} className="admin-input" placeholder="Contoh: Booster Speed Test 1"/></Field>
             <Field label="Deskripsi"><textarea name="description" value={form.description} onChange={change} rows="3" className="admin-input resize-none" placeholder="Jelaskan isi dan tujuan paket…"/></Field>
             <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Jenis paket"><select name="type" value={form.type} onChange={change} className="admin-input"><option value="mixed">Campuran angka & huruf</option><option value="number">Angka hilang</option><option value="letter">Huruf ganda</option></select></Field>
+                <Field label="Jenis paket"><select name="type" value={form.type} onChange={event => setForm(current => ({ ...current, type: event.target.value, number_percentage: event.target.value === 'number' ? 100 : event.target.value === 'letter' ? 0 : current.number_percentage || 50 }))} className="admin-input"><option value="mixed">Campuran angka & huruf</option><option value="number">Angka hilang</option><option value="letter">Huruf ganda</option></select></Field>
                 <Field label="Status"><select name="status" value={form.status} onChange={change} className="admin-input"><option value="published">Dipublikasikan</option><option value="draft">Draft</option><option value="closed">Ditutup</option></select></Field>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Target soal"><input required min="1" max="2000" type="number" name="question_count" value={form.question_count} onChange={change} className="admin-input"/></Field>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Field label="Soal per attempt"><input required min="1" max="2000" type="number" name="question_count" value={form.question_count} onChange={change} className="admin-input"/></Field>
+                <Field label="Target bank soal"><input required min={form.question_count || 1} max="5000" type="number" name="bank_size" value={form.bank_size} onChange={change} className="admin-input"/></Field>
                 <Field label="Durasi (menit)"><input required min="1" max="180" step="0.5" type="number" name="duration_minutes" value={form.duration_minutes} onChange={change} className="admin-input"/></Field>
                 <Field label="Nilai lulus"><input min="0" max="100" type="number" name="passing_score" value={form.passing_score} onChange={change} className="admin-input" placeholder="Opsional"/></Field>
             </div>
+            {form.type === 'mixed' && <Field label={`Komposisi attempt: ${form.number_percentage}% angka · ${100 - Number(form.number_percentage || 0)}% huruf`}><input type="range" min="0" max="100" step="5" name="number_percentage" value={form.number_percentage} onChange={change} className="w-full accent-indigo-600"/></Field>}
             <ApiError error={error}/>
             <div className="flex justify-end gap-3 border-t border-slate-100 pt-5"><button type="button" onClick={onClose} className="btn-secondary">Batal</button><button disabled={busy} className="btn-primary"><Save size={18}/>{busy ? 'Menyimpan…' : 'Simpan paket'}</button></div>
         </form>
@@ -64,8 +70,8 @@ export function QuizModal({ quiz, onClose }) {
 
 export function GenerationModal({ quiz, onClose }) {
     const navigate = useNavigate();
-    const [count, setCount] = useState(quiz.question_count || 500);
-    const [numberCount, setNumberCount] = useState(Math.floor((quiz.question_count || 500) / 2));
+    const [count, setCount] = useState(quiz.bank_size || Math.max(quiz.question_count || 500, 1500));
+    const [numberCount, setNumberCount] = useState(Math.round((quiz.bank_size || 1500) * (quiz.number_percentage ?? 50) / 100));
     const [start, startState] = useStartGenerationMutation();
 
     useEffect(() => {
@@ -89,7 +95,8 @@ export function GenerationModal({ quiz, onClose }) {
     return <Modal title="Generate soal" subtitle={quiz.title} onClose={onClose}>
         <form onSubmit={submit} className="space-y-5">
             <div className="rounded-2xl bg-indigo-50 p-4 text-sm leading-6 text-indigo-900"><strong>Aman untuk riwayat:</strong> soal aktif lama akan diarsipkan, bukan ditimpa. Nilai, pembahasan, dan attempt yang sedang berjalan tetap memakai snapshot soal sebelumnya.</div>
-            <Field label="Jumlah soal yang dibuat"><input autoFocus required min="1" max="2000" type="number" value={count} onChange={event => { const value = event.target.value; setCount(value); if (quiz.type === 'mixed') setNumberCount(Math.floor(Number(value || 0) / 2)); }} className="admin-input text-lg font-black"/></Field>
+            <Field label="Ukuran bank soal"><input autoFocus required min={quiz.question_count} max="5000" type="number" value={count} onChange={event => { const value = event.target.value; setCount(value); if (quiz.type === 'mixed') setNumberCount(Math.round(Number(value || 0) * (quiz.number_percentage ?? 50) / 100)); }} className="admin-input text-lg font-black"/></Field>
+            <p className="-mt-3 text-xs leading-5 text-slate-500">Setiap attempt mengambil {quiz.question_count} soal dari bank ini dan memprioritaskan soal yang paling jarang dilihat user.</p>
             {quiz.type === 'mixed' && <div className="grid gap-4 sm:grid-cols-2"><Field label="Soal angka"><input required min="0" max={count} type="number" value={numberCount} onChange={event => setNumberCount(event.target.value)} className="admin-input"/></Field><Field label="Soal huruf"><div className="admin-input bg-slate-50 font-bold text-slate-500">{Math.max(0, letters)}</div></Field></div>}
             <div className="grid grid-cols-3 gap-3 rounded-2xl border border-slate-200 p-4 text-center"><div><p className="text-xl font-black">{total}</p><p className="text-xs text-slate-500">Total</p></div><div><p className="text-xl font-black text-cyan-600">{numbers}</p><p className="text-xs text-slate-500">Angka</p></div><div><p className="text-xl font-black text-violet-600">{Math.max(0, letters)}</p><p className="text-xs text-slate-500">Huruf</p></div></div>
             <ApiError error={startState.error}/>

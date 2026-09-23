@@ -34,6 +34,8 @@ class AdminPanelApiTest extends TestCase
             'type' => QuizType::Mixed->value,
             'status' => QuizStatus::Published->value,
             'question_count' => 500,
+            'bank_size' => 1500,
+            'number_percentage' => 50,
             'duration_minutes' => 5,
             'passing_score' => 70,
         ])->assertCreated()
@@ -48,11 +50,14 @@ class AdminPanelApiTest extends TestCase
             'type' => QuizType::Number->value,
             'status' => QuizStatus::Draft->value,
             'question_count' => 250,
+            'bank_size' => 1000,
+            'number_percentage' => 100,
             'duration_minutes' => 4,
             'passing_score' => null,
         ])->assertOk()
             ->assertJsonPath('data.type', QuizType::Number->value)
             ->assertJsonPath('data.question_count', 250)
+            ->assertJsonPath('data.bank_size', 1000)
             ->assertJsonPath('data.duration_seconds', 240);
     }
 

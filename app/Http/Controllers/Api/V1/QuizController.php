@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\FinalizeQuizAttempt;
+use App\AttemptStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\QuizResource;
 use App\Models\Quiz;
@@ -23,9 +25,16 @@ class QuizController extends Controller
         return QuizResource::collection($quizzes);
     }
 
-    public function show(Quiz $quiz): QuizResource
+    public function show(Quiz $quiz, FinalizeQuizAttempt $finalize): QuizResource
     {
         abort_unless($quiz->isAvailable(), 404);
+
+        $quiz->attempts()
+            ->whereBelongsTo(request()->user())
+            ->where('status', AttemptStatus::InProgress)
+            ->where('expires_at', '<=', now())
+            ->get()
+            ->each(fn ($attempt) => $finalize->handle($attempt, true));
 
         $quiz->loadCount('questions');
         $quiz->setRelation('attempts', $quiz->attempts()

@@ -18,7 +18,8 @@
 @layer base {
     html { scroll-behavior: smooth; }
     body { @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100; }
-    button, a { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2; }
+    button, a, [role='button'] { @apply cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2; }
+    button:disabled, [aria-disabled='true'] { @apply cursor-not-allowed; }
 }
 
 @layer components {

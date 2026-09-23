@@ -1,8 +1,9 @@
 import { ExternalLink, LayoutGrid, LogOut, Menu, ShieldX, X } from 'lucide-react';
 import { useState } from 'react';
-import { Link, Navigate, NavLink, useNavigate } from 'react-router-dom';
+import { Link, Navigate, NavLink } from 'react-router-dom';
 import { Brand, PageLoader } from './Layout';
 import { useMeQuery } from '../store/api';
+import { LogoutConfirmModal } from './LogoutConfirmModal';
 
 export function AdminOnly({ children }) {
     const { data: user, isLoading } = useMeQuery();
@@ -17,13 +18,7 @@ export function AdminOnly({ children }) {
 export function AdminShell({ children, title = 'Kelola paket', description = 'Buat paket dan isi soal latihan dalam satu tempat.' }) {
     const { data: user } = useMeQuery();
     const [menuOpen, setMenuOpen] = useState(false);
-    const navigate = useNavigate();
-
-    async function logout() {
-        await fetch('/logout', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content } });
-        navigate('/');
-        window.location.reload();
-    }
+    const [logoutOpen, setLogoutOpen] = useState(false);
 
     const navigation = <>
         <NavLink to="/kelola" end onClick={() => setMenuOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition ${isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}><LayoutGrid size={19}/>Paket & generator</NavLink>
@@ -35,7 +30,7 @@ export function AdminShell({ children, title = 'Kelola paket', description = 'Bu
             <div className="flex h-full items-center justify-between px-5 lg:px-8">
                 <button onClick={() => setMenuOpen(true)} className="grid size-10 place-items-center rounded-xl border border-slate-200 lg:hidden dark:border-slate-700"><Menu size={20}/></button>
                 <div className="hidden lg:block"><p className="font-black">{title}</p><p className="text-xs text-slate-500">{description}</p></div>
-                <div className="ml-auto flex items-center gap-3"><div className="hidden text-right sm:block"><p className="text-sm font-bold">{user?.name}</p><p className="text-xs text-slate-500">Administrator</p></div>{user?.avatar_url ? <img src={user.avatar_url} alt="" className="size-10 rounded-xl object-cover"/> : <span className="grid size-10 place-items-center rounded-xl bg-indigo-100 font-black text-indigo-700">{user?.name?.charAt(0)}</span>}<button onClick={logout} title="Keluar" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-rose-600 dark:border-slate-700"><LogOut size={18}/></button></div>
+                <div className="ml-auto flex items-center gap-3"><div className="hidden text-right sm:block"><p className="text-sm font-bold">{user?.name}</p><p className="text-xs text-slate-500">Administrator</p></div>{user?.avatar_url ? <img src={user.avatar_url} alt="" className="size-10 rounded-xl object-cover"/> : <span className="grid size-10 place-items-center rounded-xl bg-indigo-100 font-black text-indigo-700">{user?.name?.charAt(0)}</span>}<button onClick={() => setLogoutOpen(true)} title="Keluar" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-rose-600 dark:border-slate-700"><LogOut size={18}/></button></div>
             </div>
         </header>
 
@@ -47,5 +42,6 @@ export function AdminShell({ children, title = 'Kelola paket', description = 'Bu
         </aside>
         {menuOpen && <button aria-label="Tutup menu" onClick={() => setMenuOpen(false)} className="fixed inset-0 z-40 bg-slate-950/40 lg:hidden"/>}
         <main className="min-h-screen pt-18 lg:ml-72">{children}</main>
+        <LogoutConfirmModal open={logoutOpen} onClose={() => setLogoutOpen(false)}/>
     </div>;
 }

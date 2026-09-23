@@ -6,11 +6,14 @@ use App\AttemptStatus;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\User;
+use App\Services\AttemptQuestionSelector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class StartQuizAttempt
 {
+    public function __construct(private AttemptQuestionSelector $questionSelector) {}
+
     public function handle(User $user, Quiz $quiz): QuizAttempt
     {
         if (! $quiz->isAvailable()) {
@@ -36,11 +39,7 @@ class StartQuizAttempt
                 app(FinalizeQuizAttempt::class)->handle($activeAttempt, true);
             }
 
-            $questionIds = $quiz->questions()
-                ->inRandomOrder()
-                ->limit($quiz->question_count)
-                ->pluck('id')
-                ->all();
+            $questionIds = $this->questionSelector->select($user, $quiz);
 
             if (count($questionIds) < $quiz->question_count) {
                 throw ValidationException::withMessages([

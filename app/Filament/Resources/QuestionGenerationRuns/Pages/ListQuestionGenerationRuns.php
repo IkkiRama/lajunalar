@@ -43,29 +43,33 @@ class ListQuestionGenerationRuns extends ListRecords
                                 return;
                             }
 
-                            $set('count', $quiz->question_count);
+                            $set('count', $quiz->bank_size);
                             $set('number_count', match ($quiz->type) {
-                                QuizType::Number => $quiz->question_count,
+                                QuizType::Number => $quiz->bank_size,
                                 QuizType::Letter => 0,
-                                QuizType::Mixed => intdiv($quiz->question_count, 2),
+                                QuizType::Mixed => (int) round($quiz->bank_size * $quiz->number_percentage / 100),
                             });
                         })
                         ->required(),
                     TextInput::make('count')
-                        ->label('Jumlah soal')
-                        ->helperText('Default 500 soal; maksimum 2.000 per paket.')
+                        ->label('Ukuran bank soal')
+                        ->helperText('Minimal sama dengan soal per attempt; maksimum 5.000.')
                         ->integer()
-                        ->minValue(1)
-                        ->maxValue(2000)
-                        ->default(500)
+                        ->minValue(function (Get $get): int {
+                            $quizId = $get('quiz_id');
+
+                            return $quizId ? (int) Quiz::query()->find($quizId)?->question_count : 1;
+                        })
+                        ->maxValue(5000)
+                        ->default(1500)
                         ->required(),
                     TextInput::make('number_count')
                         ->label('Jumlah soal angka')
                         ->helperText('Sisa jumlah soal otomatis menjadi soal huruf.')
                         ->integer()
                         ->minValue(0)
-                        ->maxValue(fn (Get $get): int => max(1, (int) ($get('count') ?: 2000)))
-                        ->default(250)
+                        ->maxValue(fn (Get $get): int => max(1, (int) ($get('count') ?: 5000)))
+                        ->default(750)
                         ->visible(function (Get $get): bool {
                             $quizId = $get('quiz_id');
 

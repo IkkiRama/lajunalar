@@ -72,7 +72,7 @@ class GenerateQuizQuestions implements ShouldBeUnique, ShouldQueue
         }
 
         $quiz->update([
-            'question_count' => $run->requested_count,
+            'bank_size' => $run->requested_count,
             'generation_config' => $run->configuration,
         ]);
 

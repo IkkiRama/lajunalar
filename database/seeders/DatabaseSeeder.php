@@ -22,9 +22,9 @@ class DatabaseSeeder extends Seeder
         );
 
         $packages = [
-            ['slug' => 'simulasi-campuran-1', 'title' => 'Simulasi Campuran 1', 'type' => QuizType::Mixed, 'number_count' => 250, 'description' => 'Latihan seimbang: angka hilang dan huruf ganda dalam satu sesi cepat.'],
-            ['slug' => 'fokus-angka-1', 'title' => 'Fokus Angka 1', 'type' => QuizType::Number, 'number_count' => 500, 'description' => 'Asah kecepatan menemukan satu angka yang tidak muncul dalam susunan.'],
-            ['slug' => 'fokus-huruf-1', 'title' => 'Fokus Huruf 1', 'type' => QuizType::Letter, 'number_count' => 0, 'description' => 'Temukan satu huruf yang muncul dua kali dengan cepat dan akurat.'],
+            ['slug' => 'simulasi-campuran-1', 'title' => 'Simulasi Campuran 1', 'type' => QuizType::Mixed, 'number_percentage' => 50, 'description' => 'Latihan seimbang: angka hilang dan huruf ganda dalam satu sesi cepat.'],
+            ['slug' => 'fokus-angka-1', 'title' => 'Fokus Angka 1', 'type' => QuizType::Number, 'number_percentage' => 100, 'description' => 'Asah kecepatan menemukan satu angka yang tidak muncul dalam susunan.'],
+            ['slug' => 'fokus-huruf-1', 'title' => 'Fokus Huruf 1', 'type' => QuizType::Letter, 'number_percentage' => 0, 'description' => 'Temukan satu huruf yang muncul dua kali dengan cepat dan akurat.'],
         ];
 
         foreach ($packages as $definition) {
@@ -34,19 +34,22 @@ class DatabaseSeeder extends Seeder
                 'type' => $definition['type'],
                 'status' => QuizStatus::Published,
                 'question_count' => 500,
+                'bank_size' => 1500,
+                'number_percentage' => $definition['number_percentage'],
                 'duration_seconds' => 300,
                 'passing_score' => null,
-                'generation_config' => ['number_count' => $definition['number_count']],
+                'generation_config' => ['number_percentage' => $definition['number_percentage']],
                 'published_at' => now(),
                 'created_by' => $admin->id,
             ]);
 
-            if ($quiz->questions()->count() === 500) {
+            if ($quiz->questions()->count() === $quiz->bank_size) {
                 continue;
             }
 
             $quiz->questions()->delete();
-            $questions = app(QuestionGenerator::class)->generate($definition['type'], 500, $definition['number_count']);
+            $numberCount = (int) round($quiz->bank_size * $definition['number_percentage'] / 100);
+            $questions = app(QuestionGenerator::class)->generate($definition['type'], $quiz->bank_size, $numberCount);
             $timestamp = now();
             foreach (array_chunk($questions, 100) as $chunk) {
                 QuizQuestion::query()->insert(array_map(fn (array $question): array => [

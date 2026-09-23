@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { BrainCircuit, LayoutDashboard, LibraryBig, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react';
 import { useMeQuery } from '../store/api';
+import { LogoutConfirmModal } from './LogoutConfirmModal';
 
 export function Brand({ light = false }) {
     return <Link to="/" className={`flex items-center gap-2 font-extrabold tracking-tight ${light ? 'text-white' : 'text-slate-950 dark:text-white'}`}>
@@ -13,19 +14,13 @@ export function Brand({ light = false }) {
 export function Header({ minimal = false }) {
     const { data: user } = useMeQuery();
     const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
-    const navigate = useNavigate();
+    const [logoutOpen, setLogoutOpen] = useState(false);
     useEffect(() => {
         document.documentElement.classList.toggle('dark', dark);
         localStorage.setItem('theme', dark ? 'dark' : 'light');
     }, [dark]);
 
-    async function logout() {
-        await fetch('/logout', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content } });
-        navigate('/');
-        window.location.reload();
-    }
-
-    return <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+    return <><header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8">
             <Brand/>
             <div className="flex items-center gap-2">
@@ -35,10 +30,10 @@ export function Header({ minimal = false }) {
                     {user.role === 'admin' && <NavLink to="/kelola" className={({isActive}) => `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300'}`}><ShieldCheck size={17}/>Admin</NavLink>}
                 </nav>}
                 <button onClick={() => setDark(!dark)} aria-label="Ganti tema" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-200">{dark ? <Sun size={19}/> : <Moon size={19}/>}</button>
-                {!minimal && user && <button onClick={logout} aria-label="Keluar" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-rose-600 dark:border-slate-700"><LogOut size={18}/></button>}
+                {!minimal && user && <button onClick={() => setLogoutOpen(true)} aria-label="Keluar" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-rose-600 dark:border-slate-700"><LogOut size={18}/></button>}
             </div>
         </div>
-    </header>;
+    </header><LogoutConfirmModal open={logoutOpen} onClose={() => setLogoutOpen(false)}/></>;
 }
 
 export function Footer() {

@@ -2,9 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\AccountWidget;
 use App\Filament\Widgets\AdminStatsOverview;
 use App\Filament\Widgets\AttemptsChart;
 use App\Http\Middleware\AuthenticateAdministrator;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -12,7 +14,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -31,6 +32,15 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('LajuNalar Admin')
             ->colors([
                 'primary' => Color::Indigo,
+            ])
+            ->userMenuItems([
+                'logout' => fn (Action $action): Action => $action
+                    ->requiresConfirmation()
+                    ->modalHeading('Keluar dari LajuNalar Admin?')
+                    ->modalDescription('Sesi admin pada perangkat ini akan diakhiri. Kamu perlu masuk kembali untuk mengelola data.')
+                    ->modalSubmitActionLabel('Ya, keluar')
+                    ->modalCancelActionLabel('Batal')
+                    ->color('danger'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

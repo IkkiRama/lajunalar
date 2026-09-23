@@ -30,7 +30,11 @@ class QuizzesTable
                     ->badge()
                     ->searchable(),
                 TextColumn::make('question_count')
-                    ->label('Soal')
+                    ->label('Per attempt')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('bank_size')
+                    ->label('Bank')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('duration_seconds')

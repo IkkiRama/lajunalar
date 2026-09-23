@@ -24,6 +24,14 @@ class QuizInfolist
                 TextEntry::make('status')
                     ->badge(),
                 TextEntry::make('question_count')
+                    ->label('Soal per attempt')
+                    ->numeric(),
+                TextEntry::make('bank_size')
+                    ->label('Target bank soal')
+                    ->numeric(),
+                TextEntry::make('number_percentage')
+                    ->label('Persentase angka')
+                    ->suffix('%')
                     ->numeric(),
                 TextEntry::make('duration_seconds')
                     ->numeric(),

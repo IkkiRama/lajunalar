@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['slug', 'title', 'description', 'type', 'status', 'question_count', 'duration_seconds', 'passing_score', 'generation_config', 'starts_at', 'ends_at', 'published_at', 'created_by'])]
+#[Fillable(['slug', 'title', 'description', 'type', 'status', 'question_count', 'bank_size', 'number_percentage', 'duration_seconds', 'passing_score', 'generation_config', 'starts_at', 'ends_at', 'published_at', 'created_by'])]
 class Quiz extends Model
 {
     /** @use HasFactory<QuizFactory> */

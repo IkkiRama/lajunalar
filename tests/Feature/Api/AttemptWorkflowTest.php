@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Api;
 
+use App\AttemptStatus;
 use App\GenerationStatus;
 use App\Jobs\GenerateQuizQuestions;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
 use App\Models\User;
 use App\QuizStatus;
@@ -61,7 +63,44 @@ class AttemptWorkflowTest extends TestCase
         $this->getJson("/api/v1/attempts/{$attemptUuid}/result")
             ->assertOk()
             ->assertJsonCount(3, 'data.answers')
+            ->assertJsonPath('data.performance_by_type.number.answered', 2)
+            ->assertJsonPath('data.performance_by_type.number.correct', 2)
+            ->assertJsonPath('data.performance_by_type.letter.answered', 0)
+            ->assertJsonPath('data.is_personal_best', true)
             ->assertJsonPath('data.answers.2.answer_text', null);
+
+        $this->getJson('/api/v1/dashboard')
+            ->assertOk()
+            ->assertJsonPath('history.data.0.latest_attempt.uuid', $attemptUuid)
+            ->assertJsonPath('history.data.0.latest_attempt.status', 'submitted')
+            ->assertJsonPath('performance_by_type.number.correct', 2)
+            ->assertJsonPath('performance_by_type.number.accuracy', 100)
+            ->assertJsonPath('performance_by_type.letter.answered', 0);
+    }
+
+    public function test_opening_quiz_detail_finalizes_an_expired_attempt(): void
+    {
+        $user = User::factory()->create();
+        [$quiz] = $this->numericQuiz(1);
+        $attemptUuid = $this->actingAs($user)
+            ->postJson("/api/v1/quizzes/{$quiz->uuid}/attempts")
+            ->assertCreated()
+            ->json('data.uuid');
+
+        QuizAttempt::query()
+            ->where('uuid', $attemptUuid)
+            ->update(['expires_at' => now()->subSecond()]);
+
+        $this->getJson("/api/v1/quizzes/{$quiz->uuid}")
+            ->assertOk()
+            ->assertJsonPath('data.attempts.0.uuid', $attemptUuid)
+            ->assertJsonPath('data.attempts.0.status', 'expired');
+
+        $this->assertDatabaseHas('quiz_attempts', [
+            'uuid' => $attemptUuid,
+            'status' => AttemptStatus::Expired->value,
+        ]);
+        $this->getJson("/api/v1/attempts/{$attemptUuid}/result")->assertOk();
     }
 
     public function test_answer_must_match_the_question_type(): void

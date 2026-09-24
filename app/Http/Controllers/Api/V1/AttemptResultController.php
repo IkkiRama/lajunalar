@@ -21,7 +21,10 @@ class AttemptResultController extends Controller
         }
 
         abort_if($attempt->status === AttemptStatus::InProgress, 409, 'Pengerjaan masih berlangsung.');
-        $attempt->load(['quiz', 'answers']);
+        $attempt->load([
+            'quiz' => fn ($query) => $query->withTrashed(),
+            'answers',
+        ]);
         $questions = QuizQuestion::query()
             ->withTrashed()
             ->whereIn('id', $attempt->question_order)

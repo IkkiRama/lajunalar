@@ -27,7 +27,11 @@ class QuizController extends Controller
 
     public function show(Quiz $quiz, FinalizeQuizAttempt $finalize): QuizResource
     {
-        abort_unless($quiz->isAvailable(), 404);
+        $hasHistory = $quiz->attempts()
+            ->whereBelongsTo(request()->user())
+            ->exists();
+
+        abort_unless($quiz->isAvailable() || $hasHistory, 404);
 
         $quiz->attempts()
             ->whereBelongsTo(request()->user())

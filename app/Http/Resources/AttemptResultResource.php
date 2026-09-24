@@ -47,6 +47,8 @@ class AttemptResultResource extends JsonResource
                 'question_count' => count($this->question_order),
                 'passing_score' => $this->quiz->passing_score,
                 'passed' => $this->quiz->passing_score === null ? null : $this->score >= $this->quiz->passing_score,
+                'can_start' => $this->quiz->isAvailable(),
+                'can_view_detail' => ! $this->quiz->trashed(),
             ],
             'answers' => $this->whenLoaded('reviewItems'),
         ];

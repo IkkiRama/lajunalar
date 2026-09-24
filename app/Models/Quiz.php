@@ -41,7 +41,8 @@ class Quiz extends Model
 
     public function isAvailable(): bool
     {
-        return $this->status === QuizStatus::Published
+        return ! $this->trashed()
+            && $this->status === QuizStatus::Published
             && ($this->starts_at === null || $this->starts_at->isPast())
             && ($this->ends_at === null || $this->ends_at->isFuture());
     }

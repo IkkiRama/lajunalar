@@ -48,7 +48,9 @@ class QuizAttemptController extends Controller
 
     private function loadOrderedQuestions(QuizAttempt $attempt): QuizAttempt
     {
-        $attempt->load('quiz:id,uuid,title,slug,type,question_count,duration_seconds');
+        $attempt->load(['quiz' => fn ($query) => $query
+            ->withTrashed()
+            ->select('id', 'uuid', 'title', 'slug', 'type', 'question_count', 'duration_seconds', 'deleted_at')]);
 
         if ($attempt->status !== AttemptStatus::InProgress) {
             return $attempt;

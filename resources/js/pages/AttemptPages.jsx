@@ -9,7 +9,7 @@ const pendingKey = (uuid) => `lajunalar:pending:${uuid}`;
 export function AttemptPage() {
     const { uuid } = useParams();
     const navigate = useNavigate();
-    const { data: response, isLoading, isError } = useAttemptQuery(uuid, { refetchOnMountOrArgChange: true });
+    const { data: response, isLoading, isError, refetch: refetchAttempt } = useAttemptQuery(uuid, { refetchOnMountOrArgChange: true });
     const [saveAnswers] = useSaveAnswersMutation();
     const [finishAttempt] = useFinishAttemptMutation();
     const [value, setValue] = useState('');
@@ -98,25 +98,35 @@ export function AttemptPage() {
         setIsFinishing(true);
         setFinishError('');
         try {
-            const synced = await flush(items);
-            if (!synced && !expired) {
-                setFinishError('Jawaban terakhir belum tersimpan. Periksa koneksi lalu coba akhiri lagi.');
-                return false;
-            }
+            await flush(items);
             await finishAttempt(uuid).unwrap();
             localStorage.removeItem(pendingKey(uuid));
             navigate(`/attempt/${uuid}/hasil`, { replace: true });
             return true;
-        } catch {
+        } catch (error) {
+            try {
+                const refreshed = await refetchAttempt().unwrap();
+                if (refreshed?.data?.status && refreshed.data.status !== 'in_progress') {
+                    localStorage.removeItem(pendingKey(uuid));
+                    navigate(`/attempt/${uuid}/hasil`, { replace: true });
+                    return true;
+                }
+            } catch {
+                // Gunakan pesan finalisasi utama di bawah.
+            }
+
+            const status = error?.status;
             setFinishError(expired
                 ? 'Waktu selesai. Sistem sedang mencoba mengumpulkan jawaban dan hasil secara otomatis.'
-                : 'Ujian belum berhasil diakhiri. Periksa koneksi lalu coba lagi.');
+                : status === 401 || status === 419
+                    ? 'Sesi login berakhir. Muat ulang halaman, masuk kembali, lalu buka riwayat pengerjaan.'
+                    : 'Ujian belum berhasil diakhiri. Sistem belum menerima finalisasi; silakan coba lagi.');
             return false;
         } finally {
             finishing.current = false;
             setIsFinishing(false);
         }
-    }, [finishAttempt, flush, navigate, pending, uuid]);
+    }, [finishAttempt, flush, navigate, pending, refetchAttempt, uuid]);
 
     useEffect(() => {
         if (!attempt) return;
@@ -205,7 +215,7 @@ export function ResultPage() {
         navigate(`/attempt/${next.data.uuid}`);
     }
     return <AppShell><div className="mx-auto max-w-7xl px-5 py-10 lg:px-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Hasil pengerjaan</p><h1 className="mt-2 text-3xl font-black tracking-tight">{result.quiz.title}</h1><p className="mt-1 text-sm text-slate-500">Selesai {formatDate(result.finished_at)}</p></div><div className="flex flex-wrap gap-2"><Link to={`/paket/${result.quiz.uuid}`} className="btn-secondary"><ArrowLeft size={18}/>Kembali</Link><button onClick={repeat} disabled={startState.isLoading} className="btn-primary"><RotateCcw size={18}/>{startState.isLoading ? 'Menyiapkan…' : 'Kerjakan lagi'}</button></div></div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Hasil pengerjaan</p><h1 className="mt-2 text-3xl font-black tracking-tight">{result.quiz.title}</h1><p className="mt-1 text-sm text-slate-500">Selesai {formatDate(result.finished_at)}</p></div><div className="flex flex-wrap gap-2"><Link to={result.quiz.can_view_detail ? `/paket/${result.quiz.uuid}` : '/riwayat'} className="btn-secondary"><ArrowLeft size={18}/>{result.quiz.can_view_detail ? 'Kembali ke paket' : 'Kembali ke riwayat'}</Link>{result.quiz.can_start && <button onClick={repeat} disabled={startState.isLoading} className="btn-primary"><RotateCcw size={18}/>{startState.isLoading ? 'Menyiapkan…' : 'Kerjakan lagi'}</button>}</div></div>
         {result.is_personal_best && <div className="mt-6 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"><Trophy className="shrink-0 text-amber-500"/><div><p className="font-black">Rekor pribadi</p><p className="text-sm">Ini adalah skor terbaikmu pada paket ini: {result.personal_best_score}.</p></div></div>}
         <section className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><ResultStat icon={Trophy} label="Skor" value={`${result.score}/${result.quiz.question_count}`} tone="indigo"/><ResultStat icon={Gauge} label="Akurasi" value={`${result.accuracy}%`} tone="sky"/><ResultStat icon={CheckCircle2} label="Benar" value={result.correct_count} tone="emerald"/><ResultStat icon={Clock3} label="Respons rata-rata" value={`${(result.average_response_ms/1000).toFixed(2)} dtk`} tone="amber"/></section>
         <section className="mt-4 grid gap-4 md:grid-cols-2"><TypeResult icon={Hash} title="Angka hilang" stats={result.performance_by_type.number}/><TypeResult icon={Type} title="Huruf ganda" stats={result.performance_by_type.letter}/></section>

@@ -40,7 +40,7 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
         'guzzle' => [
-            'verify' => false,
+            'verify' => env('GOOGLE_HTTP_VERIFY_SSL', false),
         ],
     ],
 

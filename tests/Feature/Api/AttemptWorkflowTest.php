@@ -103,6 +103,48 @@ class AttemptWorkflowTest extends TestCase
         $this->getJson("/api/v1/attempts/{$attemptUuid}/result")->assertOk();
     }
 
+    public function test_user_can_view_a_closed_quiz_detail_when_they_have_history(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        [$quiz] = $this->numericQuiz(1);
+        $attemptUuid = $this->actingAs($user)
+            ->postJson("/api/v1/quizzes/{$quiz->uuid}/attempts")
+            ->assertCreated()
+            ->json('data.uuid');
+
+        $this->postJson("/api/v1/attempts/{$attemptUuid}/finish")->assertOk();
+        $quiz->update(['ends_at' => now()->subMinute()]);
+
+        $this->getJson("/api/v1/quizzes/{$quiz->uuid}")
+            ->assertOk()
+            ->assertJsonPath('data.can_start', false)
+            ->assertJsonPath('data.attempts.0.uuid', $attemptUuid);
+
+        $this->actingAs($otherUser)
+            ->getJson("/api/v1/quizzes/{$quiz->uuid}")
+            ->assertNotFound();
+    }
+
+    public function test_finished_attempt_result_survives_a_soft_deleted_quiz(): void
+    {
+        $user = User::factory()->create();
+        [$quiz] = $this->numericQuiz(1);
+        $attemptUuid = $this->actingAs($user)
+            ->postJson("/api/v1/quizzes/{$quiz->uuid}/attempts")
+            ->assertCreated()
+            ->json('data.uuid');
+
+        $this->postJson("/api/v1/attempts/{$attemptUuid}/finish")->assertOk();
+        $quiz->delete();
+
+        $this->getJson("/api/v1/attempts/{$attemptUuid}/result")
+            ->assertOk()
+            ->assertJsonPath('data.quiz.uuid', $quiz->uuid)
+            ->assertJsonPath('data.quiz.can_start', false)
+            ->assertJsonPath('data.quiz.can_view_detail', false);
+    }
+
     public function test_answer_must_match_the_question_type(): void
     {
         $user = User::factory()->create();

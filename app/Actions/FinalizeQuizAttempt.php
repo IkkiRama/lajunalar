@@ -6,12 +6,13 @@ use App\AttemptStatus;
 use App\Models\QuizAttempt;
 use App\Models\UserQuizStat;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class FinalizeQuizAttempt
 {
     public function handle(QuizAttempt $attempt, bool $expired = false): QuizAttempt
     {
-        return DB::transaction(function () use ($attempt, $expired): QuizAttempt {
+        $attempt = DB::transaction(function () use ($attempt, $expired): QuizAttempt {
             $attempt = QuizAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
 
             if ($attempt->status !== AttemptStatus::InProgress) {
@@ -54,35 +55,46 @@ class FinalizeQuizAttempt
                 'finished_at' => now(),
             ]);
 
-            $stat = UserQuizStat::query()
-                ->where('user_id', $attempt->user_id)
-                ->where('quiz_id', $attempt->quiz_id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($stat === null) {
-                UserQuizStat::create([
-                    'user_id' => $attempt->user_id,
-                    'quiz_id' => $attempt->quiz_id,
-                    'attempts_count' => 1,
-                    'total_score' => $correctCount,
-                    'best_score' => $correctCount,
-                    'total_correct' => $correctCount,
-                    'total_answered' => $answeredCount,
-                    'last_attempt_at' => $attempt->finished_at,
-                ]);
-            } else {
-                $stat->update([
-                    'attempts_count' => $stat->attempts_count + 1,
-                    'total_score' => $stat->total_score + $correctCount,
-                    'best_score' => max($stat->best_score, $correctCount),
-                    'total_correct' => $stat->total_correct + $correctCount,
-                    'total_answered' => $stat->total_answered + $answeredCount,
-                    'last_attempt_at' => $attempt->finished_at,
-                ]);
-            }
-
             return $attempt->refresh();
         });
+
+        $this->syncUserQuizStat($attempt);
+
+        return $attempt->refresh();
+    }
+
+    private function syncUserQuizStat(QuizAttempt $attempt): void
+    {
+        if (! in_array($attempt->status, [AttemptStatus::Submitted, AttemptStatus::Expired], true)) {
+            return;
+        }
+
+        try {
+            $summary = QuizAttempt::query()
+                ->where('user_id', $attempt->user_id)
+                ->where('quiz_id', $attempt->quiz_id)
+                ->whereIn('status', [AttemptStatus::Submitted->value, AttemptStatus::Expired->value])
+                ->selectRaw('COUNT(*) as attempts_count')
+                ->selectRaw('COALESCE(SUM(score), 0) as total_score')
+                ->selectRaw('COALESCE(MAX(score), 0) as best_score')
+                ->selectRaw('COALESCE(SUM(correct_count), 0) as total_correct')
+                ->selectRaw('COALESCE(SUM(answered_count), 0) as total_answered')
+                ->selectRaw('MAX(finished_at) as last_attempt_at')
+                ->first();
+
+            UserQuizStat::query()->updateOrCreate(
+                ['user_id' => $attempt->user_id, 'quiz_id' => $attempt->quiz_id],
+                [
+                    'attempts_count' => (int) $summary->attempts_count,
+                    'total_score' => (int) $summary->total_score,
+                    'best_score' => (int) $summary->best_score,
+                    'total_correct' => (int) $summary->total_correct,
+                    'total_answered' => (int) $summary->total_answered,
+                    'last_attempt_at' => $summary->last_attempt_at,
+                ],
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

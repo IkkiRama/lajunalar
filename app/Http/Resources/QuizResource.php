@@ -21,6 +21,7 @@ class QuizResource extends JsonResource
             'description' => $this->description,
             'type' => $this->type->value,
             'type_label' => $this->type->label(),
+            'can_start' => $this->isAvailable(),
             'question_count' => $this->question_count,
             'bank_size' => $this->bank_size,
             'number_percentage' => $this->number_percentage,
